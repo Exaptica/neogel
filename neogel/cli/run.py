@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 from typing import Any
 
 from neogel.core.config import load_config
@@ -15,6 +16,9 @@ from neogel.core.build import build_engine, build_problem, build_sinks
 
 
 def main() -> None:
+    cwd = str(Path.cwd())
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
     p = argparse.ArgumentParser(prog="neogel", description="neogel experiment runner")
     sub = p.add_subparsers(dest="cmd", required=True)
 
