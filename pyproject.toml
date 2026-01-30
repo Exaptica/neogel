@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neogel"
+version = "0.1.0"
+description = "Neuro-Evolutionary Optimization & Genetic Evolutionary Learning"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "rich>=13.7",
+  "matplotlib>=3.7",
+  "pyyaml>=6.0",
+]
+
+[project.scripts]
+neogel = "neogel.cli.run:main"
+
+# IMPORTANT: only package the neogel/ directory (ignore runs/, configs/, etc.)
+[tool.setuptools.packages.find]
+include = ["neogel*"]
+exclude = ["runs*", "configs*", "docs*", "examples*", "scripts*", "tests*"]
+
+[tool.ruff]
+line-length = 100

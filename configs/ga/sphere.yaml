@@ -1,0 +1,46 @@
+experiment: ga_sphere
+seed: 0
+
+run:
+  generations: 200
+  pop_size: 200
+  log_every: 1
+
+# optional; can also pass --workers
+workers: null
+
+problem:
+  path: neogel.problems.sphere:SphereProblem
+
+engine:
+  name: ga
+  params:
+    pop_size: 200
+    genome_dim: 20
+    mutation_sigma: 0.15
+    elitism: 1
+
+operators:
+  selection:
+    path: neogel.operators.selection:tournament_select
+    params:
+      k: 3
+  mutation:
+    path: neogel.operators.mutation:gaussian_mutation
+    params:
+      sigma: 0.15
+
+metrics:
+  - path: neogel.metrics.fitness:best_mean_std
+  - path: neogel.metrics.runtime:evals_per_sec
+
+logging:
+  csv:
+    enabled: true
+    flatten: false
+  jsonl:
+    enabled: true
+  rich:
+    enabled: true
+  plots:
+    enabled: true

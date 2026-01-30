@@ -1,0 +1,29 @@
+experiment: ga_sleepy_sphere
+seed: 0
+
+run:
+  generations: 12
+  pop_size: 80
+  log_every: 1
+
+problem:
+  path: neogel.problems.sleepy:SleepySphereProblem
+
+engine:
+  name: ga
+  params:
+    pop_size: 80
+    genome_dim: 20
+    mutation_sigma: 0.15
+    elitism: 1
+
+logging:
+  rich:
+    enabled: false   # disable rich in tests
+  csv:
+    enabled: true
+    flatten: true
+  jsonl:
+    enabled: false
+  plots:
+    enabled: false
