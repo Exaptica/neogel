@@ -83,6 +83,7 @@ class Runner:
                     "elapsed_sec": elapsed_sec,
                     "evals_total": evals_total,
                     "engine": self.engine.metrics(),
+                    "engine_obj": self.engine,
                     "metrics": custom,
                 }
                 for s in self.sinks:

@@ -11,6 +11,9 @@ from rich.live import Live
 from rich.table import Table
 from ..viz.fitness_curves import save_fitness_curve
 
+from neogel.viz.fitness_curves import save_fitness_curve
+from neogel.viz.archive_heatmap import save_archive_heatmap
+
 class Sink(Protocol):
     def log(self, payload: dict[str, Any]) -> None: ...
     def close(self) -> None: ...
@@ -124,51 +127,67 @@ class CSVSink:
             pass
 
 class PlotSink:
-    """Buffers metrics and writes plots on close().
+    """Buffers metrics during a run and writes plots on close().
 
-    Customization:
-    - extract(payload) -> dict with keys:
-        - gen (int)
-        - best (float)
-        - mean (float) optional
+    Writes:
+      - fitness_curve.png (best/mean if available)
+      - archive_heatmap.png if engine has a 2D ArchiveGrid at engine.archive
     """
+
     def __init__(
         self,
         artifacts_dir: str | Path,
         *,
-        extract: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
-        filename: str = "fitness_curve.png",
-        title: str = "Fitness over generations",
+        extract_curve: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+        curve_filename: str = "fitness_curve.png",
+        heatmap_filename: str = "archive_heatmap.png",
+        curve_title: str = "Fitness over generations",
+        heatmap_title: str = "MAP-Elites Archive (Fitness Heatmap)",
     ):
         self.artifacts_dir = Path(artifacts_dir)
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
 
-        self.extract = extract
-        self.filename = filename
-        self.title = title
+        self.extract_curve = extract_curve
+        self.curve_filename = curve_filename
+        self.heatmap_filename = heatmap_filename
+        self.curve_title = curve_title
+        self.heatmap_title = heatmap_title
 
         self._gens: list[int] = []
         self._best: list[float] = []
         self._mean: list[float] = []
 
+        # We keep the last engine reference we saw so we can read archive on close().
+        self._last_engine_obj: Any | None = None
+
     def log(self, payload: dict[str, Any]) -> None:
-        if self.extract is None:
-            # default assumes Runner payload + GA metrics
-            e = payload.get("engine", {})
-            row = {
-                "gen": payload.get("gen"),
-                "best": e.get("best_fitness"),
-                "mean": e.get("mean_fitness"),
-            }
+        # keep a handle to the engine object if it's in payload (optional)
+        if "engine_obj" in payload:
+            self._last_engine_obj = payload["engine_obj"]
+
+        # default extraction: try GA-style keys first, then MAP-Elites max_fitness
+        if self.extract_curve is None:
+            e = payload.get("engine", {})  # engine.metrics() dict
+            gen = payload.get("gen")
+
+            # Prefer GA metrics if present
+            best = e.get("best_fitness")
+            mean = e.get("mean_fitness")
+
+            # For MAP-Elites, use max_fitness as "best"
+            if best is None:
+                best = e.get("max_fitness")
+
+            row = {"gen": gen, "best": best, "mean": mean}
         else:
-            row = self.extract(payload)
+            row = self.extract_curve(payload)
 
         g = row.get("gen")
         b = row.get("best")
         m = row.get("mean")
 
         if g is None or b is None:
-            return  # ignore incomplete rows
+            return
 
         self._gens.append(int(g))
         self._best.append(float(b))
@@ -176,18 +195,38 @@ class PlotSink:
             self._mean.append(float(m))
 
     def close(self) -> None:
-        if not self._gens:
-            return
-        out_path = self.artifacts_dir / self.filename
+        # --- Fitness curve ---
+        if self._gens:
+            out_path = self.artifacts_dir / self.curve_filename
+            mean = self._mean if len(self._mean) == len(self._gens) else None
+            save_fitness_curve(
+                generations=self._gens,
+                best=self._best,
+                mean=mean,
+                out_path=out_path,
+                title=self.curve_title,
+            )
 
-        mean = self._mean if len(self._mean) == len(self._gens) else None
-        save_fitness_curve(
-            generations=self._gens,
-            best=self._best,
-            mean=mean,
-            out_path=out_path,
-            title=self.title,
-        )
+        # --- Archive heatmap (MAP-Elites) ---
+        # We try to find a live archive object. Preferred: payload provides engine_obj.
+        engine = self._last_engine_obj
+        if engine is None:
+            return
+
+        archive = getattr(engine, "archive", None)
+        if archive is None:
+            return
+
+        # Only for 2D archives
+        try:
+            if len(getattr(archive, "shape", ())) != 2:
+                return
+        except Exception:
+            return
+
+        out_path = self.artifacts_dir / self.heatmap_filename
+        save_archive_heatmap(archive, out_path, title=self.heatmap_title)
+
 
 class JSONLSink:
     """Writes one JSON object per log() call (newline-delimited JSON).

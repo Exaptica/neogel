@@ -1,0 +1,43 @@
+experiment: qd_sphere_mapelites
+seed: 0
+
+run:
+  generations: 50
+  pop_size: 256
+  log_every: 1
+
+workers: null
+
+problem:
+  path: neogel.problems.sphere_qd:SphereQDProblem
+
+engine:
+  name: mapelites
+
+  archive:
+    mins: [-1.0, -1.0]
+    maxs: [ 1.0,  1.0]
+    bins: [20, 20]
+
+  emitter:
+    name: gaussian
+    params:
+      genome_dim: 20
+      init_low: -1.0
+      init_high: 1.0
+      sigma: 0.1
+      init_fraction: 0.5
+
+  descriptor:
+    path: neogel.descriptors.sphere:first2_coords
+
+logging:
+  rich:
+    enabled: true
+  csv:
+    enabled: true
+    flatten: true
+  jsonl:
+    enabled: true
+  plots:
+    enabled: true

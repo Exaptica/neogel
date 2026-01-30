@@ -1,0 +1,43 @@
+experiment: qd_bipedalwalker_mapelites
+seed: 0
+
+run:
+  generations: 200
+  pop_size: 256        # batch size
+  log_every: 1
+
+workers: 4
+
+problem:
+  path: neogel.problems.bipedalwalker_qd:BipedalWalkerLinearPolicyQD
+
+engine:
+  name: mapelites
+
+  archive:
+    mins: [0.0, 0.0]
+    maxs: [1.0, 1.0]
+    bins: [50, 50]
+
+  emitter:
+    name: gaussian
+    params:
+      genome_dim: 100
+      init_low: -1.0
+      init_high: 1.0
+      sigma: 0.1
+      init_fraction: 0.3
+
+  descriptor:
+    path: neogel.descriptors.bipedalwalker:steps_and_smoothness
+
+logging:
+  rich:
+    enabled: true
+  csv:
+    enabled: true
+    flatten: true
+  jsonl:
+    enabled: true
+  plots:
+    enabled: true
