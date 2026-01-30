@@ -7,6 +7,9 @@ name = "neogel"
 version = "0.1.0"
 readme = "README.md"
 license = { file = "LICENSE" }
+authors = [
+  { name = "Alejandro Medina" }
+]
 description = "Neuro-Evolutionary Optimization & Genetic Evolutionary Learning"
 requires-python = ">=3.10"
 dependencies = [
