@@ -27,15 +27,15 @@ class GaussianEmitter:
 
     def emit(self, n: int) -> list[Candidate]:
         n_init = int(self.cfg.init_fraction * n)
-        n_mut = n - n_init
+        n_mut = n - n_init 
 
         batch: list[Candidate] = []
 
         # Random initialization
         for _ in range(n_init):
-            g = self.rng.gen.uniform(
+            g = self.rng.gen.uniform( 
                 self.cfg.init_low, self.cfg.init_high, size=(self.cfg.genome_dim,)
-            )
+            ) 
             batch.append(Candidate(genotype=g, record=None, meta={"src": "init"}))
 
         # Mutate elites

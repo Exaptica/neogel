@@ -38,7 +38,7 @@ class GAEngine:
     def ask(self, n: int) -> list[Candidate]:
         # For generation 0: ask returns current population if not yet evaluated.
         if any(c.record is None for c in self.population):
-            return self.population
+            return self.population # this ensures that the 0th generation does not crash things in a major way 
 
         # Otherwise: create offspring
         parents = tournament_select(self.population, self.rng, n=n, k=3)
